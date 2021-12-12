@@ -35,6 +35,7 @@ html, body {
   height: 8rem;
   user-select: none;
   margin: 0 auto;
+  cursor: pointer;
   display: block;
   animation: rotateTick;
   animation-duration: 0s;
@@ -92,6 +93,13 @@ html, body {
 .upgrade {
   display: flex;
   cursor: pointer;
+  margin-bottom: 0.25rem;
+  user-select: none;
+  justify-content: space-between;
+}
+
+.upgrade button {
+  float:right;
 }
 
 .hidden {

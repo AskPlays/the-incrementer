@@ -14,12 +14,18 @@ class Game {
     this.buyMode = 0;
     
     this.E = {}
-    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number'];
+    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'tickSpeed'];
     for(const id of elts) {
       this.E[id] = document.getElementById(id); 
     }
     this.listen('enable', "click", (e)=>{this.upgrade("cog1", 1); e.currentTarget.remove()});
     this.listen('buyMode', "click", (e)=>this.changeBuyMode());
+
+    const keys = Object.keys(Upgrades);
+    for(const key of keys) {
+      this.E[key] = document.getElementById(key); 
+      this.listen(key, "click", (e)=>this.upgrade(key));
+    }
 
     this.load();
   }
@@ -28,11 +34,14 @@ class Game {
     
     const keys = Object.keys(this.upgrades);
     for(const key of keys) {
-      if(this.tick%Upgrades[key].ticks == 0) this.number += Upgrades[key].earn(this.upgrades[key]);
+      if(Upgrades[key].type == "basic") {
+        if(this.tick%Upgrades[key].ticks == 0) this.number += Upgrades[key].earn(this.upgrades[key]);
+      }
     }
 
     // display
     this.E.number.innerText = round(this.number);
+    this.E.tickSpeed.innerText = this.tickSpeed;
     if(this.upgrades["cog1"]) {
       this.E.cog.style.animationName = this.tickSpeed >= 30 ? "rotate": "rotateTick";
       this.E.cog.style.animationTimingFunction = this.tickSpeed >= 30 ? "linear" : "ease-in-out";
@@ -43,15 +52,16 @@ class Game {
   }
   upgrade(id, amnt=null) {
     const upgrade = Upgrades[id];
-    const repeats = amnt || ([1, 10, 100, Infinity])[this.buyMode];
+    const repeats = amnt!= null ? amnt : ([1, 10, 100, Infinity])[this.buyMode];
     let repeat = 0;
     if(typeof this.upgrades[id] === "undefined") this.upgrades[id] = 0;
-    while(this[upgrade.currency] > upgrade.cost(this.upgrades[id]) && repeat < repeats) {
+    while(this[upgrade.currency] >= upgrade.cost(this.upgrades[id]) && repeat < repeats) {
       this[upgrade.currency] -= upgrade.cost(this.upgrades[id]);
       this.upgrades[id]++;
+      if(upgrade.type == "tickSpeed") this.tickSpeed += upgrade.earn(this.upgrades[id]);
       repeat++;
     }
-    this.E[upgrade.type].children[0].children[1].innerText = this.upgrades[id];
+    this.E[id].children[1].innerText = this.upgrades[id];
   }
   changeSpeed(spd) {
     this.tickSpeed = spd;
@@ -83,7 +93,7 @@ class Game {
     }
   }
   listen(id, type, func) {
-    const elt = this.E[id];
+    const elt = this.E[id] ? this.E[id] : document.getElementById(id);
     if(elt) elt.addEventListener(type, func);
   }
 }
