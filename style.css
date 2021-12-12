@@ -1,0 +1,162 @@
+html, body {
+  --roundness: 4px;
+  --color: #fff;
+  --color-low: #cde;
+  --bg-color: #123;
+  --bg-color1: #234;
+
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family:'Courier New', Courier, monospace;
+  font-size: 100%;
+  background-color: var(--bg-color);
+  color: var(--color);
+}
+
+#content {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+#game {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+}
+
+#cogWrapper {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+#cog {
+  width: 8rem;
+  height: 8rem;
+  user-select: none;
+  margin: 0 auto;
+  display: block;
+  animation: rotateTick;
+  animation-duration: 0s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+#enableWrapper {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+#enable {
+  border: var(--color) 1px solid;
+  border-radius: var(--roundness);
+  color: var(--color);
+  background-color: var(--bg-color);
+  padding: 0.75rem;
+  box-shadow: 0px 2px 8px 8px #fff3;
+  display: block;
+  margin: 0 auto;
+  font-size: 1.75rem;
+}
+
+#enable:hover {
+  background-color: var(--bg-color1);
+}
+
+.panel {
+  border-radius: var(--roundness);
+  background-color: var(--bg-color1);
+  padding: 10px;
+  box-shadow: 0px 2px 4px #0004;
+  display: block;
+}
+
+.pair {
+
+}
+
+.key {
+  margin-right: 0.5rem;
+}
+
+.value {
+
+}
+
+.buy {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.upgrade {
+  display: flex;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+h1 {
+  margin: 0;
+  padding: 2rem 0px;
+  text-align: center;
+}
+
+h2 {
+  margin: 0;
+  padding: 2rem 0px;
+  text-align: center;
+}
+
+button {
+  border: var(--color-low) 1px solid;
+  border-radius: var(--roundness);
+  background-color: var(--bg-color);
+  padding: 0.1rem;
+  box-shadow: 0px 2px 4px #0004;
+  color: var(--color-low);
+  cursor: pointer;
+}
+
+button:hover {
+  border: var(--color) 1px solid;
+  color: var(--color);
+  background-color: var(--bg-color1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@keyframes rotate {
+  0% {transform: rotate(0deg);}
+  100% {transform: rotate(60deg);}
+}
+
+@keyframes rotateTick {
+  0% {transform: rotate(0deg);}
+  50% {transform: rotate(60deg);}
+  100% {transform: rotate(60deg);}
+}
+
+@media only screen and (max-width: 600px) {
+  #game {
+    grid-template-columns: auto;
+    grid-template-rows: auto;
+    grid-template-areas: 
+    "top"
+    "middle"
+    "bottom";
+  }
+  #middle {
+    grid-area: top;
+  }
+  #right {
+    grid-area: middle;
+  }
+  #left {
+    grid-area: bottom;
+  }
+}
