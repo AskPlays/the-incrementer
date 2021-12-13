@@ -10,15 +10,22 @@ export default {
     "type": "tickSpeed",
     "currency": "number",
     "earn": (lvl) => 0,
-    "buy": (lvl) => 10/(10+lvl),
+    "buy": (lvl, lube) => (10*lube)/(10*lube+lvl),
     "cost": (lvl) => lvl*50+100,
   },
   "cog3": {
-    "type": "gearRatio",
+    "type": "gearReset",
     "currency": "number",
     "earn": (lvl) => 0,
-    "buy": (lvl) => 5/(5+lvl),
+    "buy": (lvl) => 0,
     "cost": (lvl) => Math.pow((lvl+1), 2)*10000,
+  },
+  "cog4": {
+    "type": "lubricant",
+    "currency": "number",
+    "earn": (lvl) => 0,
+    "buy": (lvl) => 0,
+    "cost": (lvl) => Math.pow(10, (lvl+1))*10000,
   },
 }
 
