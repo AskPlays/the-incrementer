@@ -7,6 +7,7 @@ const BuyModes = ["1x", "10x", "100x", "max"];
 class Game {
   constructor() {
     this.number = 0;
+    this.pNumber = 0;
     this.tick = 0;
     this.tickSpeed = 1;
     this.gearRatio = 1;
@@ -34,21 +35,26 @@ class Game {
   }
   update() {
     this.tick++;
-    const prevNum = this.number;
+    this.pNumber = this.number;
     
+    const keys = Object.keys(this.upgrades);
+    for(const key of keys) {
+      if(Upgrades[key].type == "basic") {
+        this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio;
+      }
+    }
+
+    this.display();
+  }
+  display() {
+    // display
     const keys = Object.keys(Upgrades);
     for(const key of keys) {
-      if(this.upgrades[key]) {
-        if(Upgrades[key].type == "basic") {
-          this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio;
-        }
-      }
       this.updateUpgrade(key);
     }
 
-    // display
-    this.E.number.innerText = round(this.number) + ` (${round((this.number-prevNum)*this.tickSpeed)} n/s)`;
-    this.E.tickSpeed.innerText = round(this.tickSpeed);
+    this.E.number.innerText = round(this.number) + ` (${round((this.number-this.pNumber)*this.tickSpeed)} n/s)`;
+    this.E.tickSpeed.innerText = round(this.tickSpeed) +" Hz";
     this.E.gearRatio.innerText = round(this.gearRatio);
     if(this.upgrades["cog1"]) {
       this.E.cog.style.animationName = this.tickSpeed >= 3 ? "rotate": "rotateTick";
@@ -66,7 +72,7 @@ class Game {
       this[upgrade.currency] -= upgrade.cost(this.upgrades[id]);
       if(upgrade.type == "tickSpeed") this.changeSpeed(this.tickSpeed + upgrade.buy(this.upgrades[id]));
       if(upgrade.type == "gearRatio") {
-        this.gearRatio += Math.sqrt(this.tickSpeed);
+        this.gearRatio += this.tickSpeed-1;
         this.changeSpeed(1);
         this.number = 0;
         delete this.upgrades["cog1"];
@@ -79,7 +85,8 @@ class Game {
       repeat++;
     }
     
-    this.updateUpgrade(id);
+    //this.updateUpgrade(id);
+    this.display();
   }
   changeSpeed(spd) {
     this.tickSpeed = spd;
