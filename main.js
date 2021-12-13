@@ -15,11 +15,11 @@ class Game {
     this.buyMode = 0;
     
     this.E = {}
-    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'tickSpeed'];
+    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'tickSpeed', 'gearRatio'];
     for(const id of elts) {
       this.E[id] = document.getElementById(id); 
     }
-    this.listen('enable', "click", (e)=>{this.upgrade("cog1", 1); e.currentTarget.remove()});
+    this.listen('enable', "click", (e)=>{this.upgrade("cog1", 1); hide(e.currentTarget)});
     this.listen('buyMode', "click", (e)=>this.changeBuyMode());
 
     const keys = Object.keys(Upgrades);
@@ -30,21 +30,26 @@ class Game {
 
     this.load();
     setInterval(()=>{this.save()}, 10000);
+    this.update();
   }
   update() {
     this.tick++;
     const prevNum = this.number;
     
-    const keys = Object.keys(this.upgrades);
+    const keys = Object.keys(Upgrades);
     for(const key of keys) {
-      if(Upgrades[key].type == "basic") {
-        this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio;
+      if(this.upgrades[key]) {
+        if(Upgrades[key].type == "basic") {
+          this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio;
+        }
       }
+      this.updateUpgrade(key);
     }
 
     // display
     this.E.number.innerText = round(this.number) + ` (${round((this.number-prevNum)*this.tickSpeed)} n/s)`;
     this.E.tickSpeed.innerText = round(this.tickSpeed);
+    this.E.gearRatio.innerText = round(this.gearRatio);
     if(this.upgrades["cog1"]) {
       this.E.cog.style.animationName = this.tickSpeed >= 3 ? "rotate": "rotateTick";
       this.E.cog.style.animationTimingFunction = this.tickSpeed >= 3 ? "linear" : "ease-in-out";
@@ -56,17 +61,19 @@ class Game {
     const upgrade = Upgrades[id];
     const repeats = amnt!= null ? amnt : ([1, 10, 100, Infinity])[this.buyMode];
     let repeat = 0;
-    // if(typeof this.upgrades[id] === "undefined") this.upgrades[id] = 0;
-    while(this[upgrade.currency] >= upgrade.cost(this.upgrades[id] || 0) && repeat < repeats) {
+    if(typeof this.upgrades[id] === "undefined") this.upgrades[id] = 0;
+    while(this[upgrade.currency] >= upgrade.cost(this.upgrades[id]) && repeat < repeats) {
       this[upgrade.currency] -= upgrade.cost(this.upgrades[id]);
       if(upgrade.type == "tickSpeed") this.changeSpeed(this.tickSpeed + upgrade.buy(this.upgrades[id]));
       if(upgrade.type == "gearRatio") {
-        this.gearRatio = this.tickSpeed;
+        this.gearRatio += Math.sqrt(this.tickSpeed);
         this.changeSpeed(1);
+        this.number = 0;
         delete this.upgrades["cog1"];
         delete this.upgrades["cog2"];
         this.updateUpgrade("cog1");
         this.updateUpgrade("cog2");
+        show(this.E.enable);
       }
       this.upgrades[id]++;
       repeat++;
@@ -85,27 +92,30 @@ class Game {
   }
   updateUpgrade(id) {
     this.E[id].children[1].innerText = this.upgrades[id] || 0;
-    this.E[id].children[2].innerText = "Cost: "+Upgrades[id].cost(this.upgrades[id] || 0);
+    this.E[id].children[2].innerText = "Cost: "+round(Upgrades[id].cost(this.upgrades[id] || 0));
   }
   save() {
     localStorage.setItem('save', JSON.stringify({
       number: this.number,
       tick: this.tick,
       tickSpeed: this.tickSpeed,
+      gearRatio: this.gearRatio,
       upgrades: this.upgrades,
       states: this.states,
+      buyMode: this.buyMode,
     }));
   }
   load() {
     const save = JSON.parse(localStorage.getItem('save'));
     if(save) {
       Object.assign(this, save);
+      this.E.buyMode.innerText = BuyModes[this.buyMode]; 
       const keys = Object.keys(Upgrades);
       for(const key of keys) {
-        this.upgrade(key, 0);
+        //this.upgrade(key, 0);
         this.updateUpgrade(key);
       }
-      if(this.upgrades["cog1"]) this.E.enable.remove();
+      if(this.upgrades["cog1"]) hide(this.E.enable);
     }
   }
   listen(id, type, func) {
@@ -120,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function round(num) {
-  if(num > 1000000) {
+  if(num >= 1000000) {
     const log = Math.floor(Math.log10(num));
     return Math.round(num/Math.pow(10, log)*100)/100+"e"+log;
   }
