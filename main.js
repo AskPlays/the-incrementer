@@ -4,6 +4,8 @@ import Upgrades from './js/upgrades.js';
 
 const BuyModes = ["1x", "10x", "100x", "max"];
 
+let tc = 0;
+
 class Game {
   constructor() {
     this.number = 0;
@@ -15,6 +17,8 @@ class Game {
     this.upgrades = {};
     this.states = {};
     this.buyMode = 0;
+    this.pTime = performance.now();
+    this.delta = 0;
     
     this.E = {}
     const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'numberGain', 'tickSpeed', 'gearRatio', 'lubricant'];
@@ -31,20 +35,36 @@ class Game {
     }
 
     this.load();
-    setInterval(()=>{this.save()}, 10000);
+    setInterval(()=>{
+      this.save();
+      console.log(this.tick-tc);
+      tc = this.tick;
+    }, 10000);
     this.update();
   }
   update() {
+    this.delta = performance.now()-this.pTime;
+    this.pTime = performance.now();
     this.tick++;
     this.pNumber = this.number;
-    
-    const keys = Object.keys(this.upgrades);
-    for(const key of keys) {
-      if(Upgrades[key].type == "basic") {
-        this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio;
+
+    if(this.tickSpeed >= 30) {
+      this.mult = this.delta/1000*this.tickSpeed;
+      const keys = Object.keys(this.upgrades);
+      for(const key of keys) {
+        if(Upgrades[key].type == "basic") {
+          this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio*this.mult;
+        }
+      }
+    } else {
+      const keys = Object.keys(this.upgrades);
+      for(const key of keys) {
+        if(Upgrades[key].type == "basic") {
+          this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio;
+        }
       }
     }
-
+    
     this.display();
   }
   display() {
@@ -55,7 +75,8 @@ class Game {
     }
 
     this.E.number.innerText = round(this.number);
-    this.E.numberGain.innerText = `${round((this.number-this.pNumber)*this.tickSpeed)} n/s`;
+    if(this.tickSpeed >= 30) this.E.numberGain.innerText = `${round((this.number-this.pNumber)*this.delta/1000*this.tickSpeed)} n/s`;
+    else this.E.numberGain.innerText = `${round((this.number-this.pNumber)*this.tickSpeed)} n/s`;
     this.E.tickSpeed.innerText = round(this.tickSpeed) +" Hz";
     this.E.gearRatio.innerText = round(this.gearRatio);
     this.E.lubricant.innerText = round(this.lubricant);
@@ -75,15 +96,17 @@ class Game {
     while(this[upgrade.currency] >= upgrade.cost(this.upgrades[id]) && repeat < repeats) {
       this[upgrade.currency] -= upgrade.cost(this.upgrades[id]);
       if(upgrade.type == "tickSpeed") this.changeSpeed(this.tickSpeed + upgrade.buy(this.upgrades[id], this.lubricant));
-      if(upgrade.type == "gearReset" && confirm("Are you sure you want to Gear Reset?\nThis will reset your number and basic upgrades,\nbut will apply a permanent multiplier to number gain.")) {
-        this.gearRatio += this.tickSpeed-1;
-        this.changeSpeed(1);
-        this.number = 0;
-        delete this.upgrades["cog1"];
-        delete this.upgrades["cog2"];
-        this.updateUpgrade("cog1");
-        this.updateUpgrade("cog2");
-        show(this.E.enable);
+      if(upgrade.type == "gearReset") {
+        if(confirm("Are you sure you want to Gear Reset?\nThis will reset your number and basic upgrades,\nbut will apply a permanent multiplier to number gain.")) {
+          this.gearRatio += this.tickSpeed-1;
+          this.changeSpeed(1);
+          this.number = 0;
+          delete this.upgrades["cog1"];
+          delete this.upgrades["cog2"];
+          this.updateUpgrade("cog1");
+          this.updateUpgrade("cog2");
+          show(this.E.enable);
+        } else break;
       }
       if(upgrade.type == "lubricant") this.lubricant++;
       this.upgrades[id]++;
@@ -96,7 +119,7 @@ class Game {
   changeSpeed(spd) {
     this.tickSpeed = spd;
     clearInterval(this.interval);
-    this.interval = setInterval(()=>{window.game.update()}, 1000/spd);
+    this.interval = setInterval(()=>{window.game.update()}, Math.max(1000/spd, 1000/30));
   }
   changeBuyMode() {
     this.buyMode = (this.buyMode+1)%BuyModes.length;

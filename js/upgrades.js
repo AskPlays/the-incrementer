@@ -11,7 +11,7 @@ export default {
     "currency": "number",
     "earn": (lvl) => 0,
     "buy": (lvl, lube) => (10*lube)/(10*lube+lvl),
-    "cost": (lvl) => lvl*50+100,
+    "cost": (lvl) => linToExp1(lvl, 50, 1.2, 100),//lvl*50+100,
   },
   "cog3": {
     "type": "gearReset",
