@@ -21,12 +21,13 @@ class Game {
     this.deltas = [];
     
     this.E = {}
-    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'numberGain', 'tickSpeed', 'gearRatio', 'lubricant', 'offline', 'oNumber', 'oNumberGain'];
+    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'numberGain', 'tickSpeed', 'gearRatio', 'lubricant', 'offline', 'offlineWrapper', 'oNumber', 'oNumberGain'];
     for(const id of elts) {
       this.E[id] = document.getElementById(id); 
     }
     this.listen('enable', "click", (e)=>{this.upgrade("cog1", 1); hide(e.currentTarget)});
     this.listen('buyMode', "click", (e)=>this.changeBuyMode());
+    this.listen('offlineWrapper', "click", (e)=>{if(e.currentTarget == e.target) hide(e.currentTarget);});
 
     const keys = Object.keys(Upgrades);
     for(const key of keys) {
@@ -52,7 +53,7 @@ class Game {
     this.pNumber = this.number;
 
     if(this.delta >= 1000*60) {
-      show(this.E.offline);
+      show(this.E.offlineWrapper);
       let preNumber = this.number;
       let repeat = 0;
       let timer = 0;
@@ -70,6 +71,8 @@ class Game {
         }
         repeat++;
       }
+      this.E.oNumber.innerText = round(this.number);
+      this.E.oNumberGain.innerText = round(this.number-preNumber);
     }
 
     if(this.tickSpeed >= 30) {

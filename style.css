@@ -64,6 +64,27 @@ html, body {
   background-color: var(--bg-color1);
 }
 
+#offlineWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0007;
+}
+
+#offline {
+  width: auto;
+  display: inline-block;
+}
+
+#offline h2 {
+  padding: 0.5rem 0px;
+}
+
 .panel {
   border-radius: var(--roundness);
   background-color: var(--bg-color1);
