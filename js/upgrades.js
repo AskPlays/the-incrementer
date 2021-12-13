@@ -4,14 +4,14 @@ export default {
     "currency": "number",
     "earn": (lvl) => lvl,
     "buy": (lvl) => 0,
-    "cost": (lvl) => linToExp1(lvl, 10, 2, 100),
+    "cost": (lvl) => triple(lvl, 10, 2, 1.005, 100, 1000),//linToExp1(lvl, 10, 2, 100),
   },
   "cog2": {
     "type": "tickSpeed",
     "currency": "number",
     "earn": (lvl) => 0,
     "buy": (lvl, lube) => (10*lube)/(10*lube+lvl),
-    "cost": (lvl) => linToExp1(lvl, 50, 1.2, 100),//lvl*50+100,
+    "cost": (lvl) => triple(lvl, 50, 1.5, 1.01, 100, 1000),//lvl*50+100,
   },
   "cog3": {
     "type": "gearReset",
@@ -40,4 +40,8 @@ function linToExp2(lvl, lin, exp, cutoff) {
 
 function linToExp3(lvl, lin, exp, cutoff) {
   return lvl >= cutoff ? cutoff*lin+Math.pow(lin, exp+(lvl-cutoff)) : lvl*lin;
+}
+
+function triple(lvl, lin, exp, exp2, cutoff, cutoff2) {
+  return (lvl >= cutoff2 ? Math.pow(exp2, (lvl-cutoff2))*linToExp1(cutoff2, lin, exp, cutoff) : linToExp1(lvl, lin, exp, cutoff));
 }

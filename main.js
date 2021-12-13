@@ -4,12 +4,11 @@ import Upgrades from './js/upgrades.js';
 
 const BuyModes = ["1x", "10x", "100x", "max"];
 
-let tc = 0;
-
 class Game {
   constructor() {
     this.number = 0;
     this.pNumber = 0;
+    this.cNumber = [];
     this.tick = 0;
     this.tickSpeed = 1;
     this.gearRatio = 1;
@@ -17,11 +16,12 @@ class Game {
     this.upgrades = {};
     this.states = {};
     this.buyMode = 0;
-    this.pTime = performance.now();
+    this.pTime = performance.timeOrigin+performance.now();
     this.delta = 0;
+    this.deltas = [];
     
     this.E = {}
-    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'numberGain', 'tickSpeed', 'gearRatio', 'lubricant'];
+    const elts = ['cog', 'enable', 'buyMode', 'basic', 'number', 'numberGain', 'tickSpeed', 'gearRatio', 'lubricant', 'offline', 'oNumber', 'oNumberGain'];
     for(const id of elts) {
       this.E[id] = document.getElementById(id); 
     }
@@ -34,19 +34,43 @@ class Game {
       this.listen(key, "click", (e)=>this.upgrade(key));
     }
 
+    console.log(this.number);
     this.load();
-    setInterval(()=>{
-      this.save();
-      console.log(this.tick-tc);
-      tc = this.tick;
-    }, 10000);
+    console.log(this.number);
+    setInterval(()=>{this.save()}, 10000);
     this.update();
+    console.log(this.number);
   }
   update() {
-    this.delta = performance.now()-this.pTime;
-    this.pTime = performance.now();
+    const time = performance.timeOrigin+performance.now();
+    this.delta = time-this.pTime;
+    if(this.delta < 0) this.delta = 0;
+    this.pTime = time;
+    this.deltas.unshift(this.delta);
+    this.deltas = this.deltas.slice(0, 60);
     this.tick++;
     this.pNumber = this.number;
+
+    if(this.delta >= 1000*60) {
+      show(this.E.offline);
+      let preNumber = this.number;
+      let repeat = 0;
+      let timer = 0;
+      while(timer < this.delta && repeat < 10000) {
+        const keys = Object.keys(this.upgrades);
+        for(const key of keys) {
+          if(Upgrades[key].type == "basic") {
+            this.number += Upgrades[key].earn(this.upgrades[key])*this.gearRatio*this.tickSpeed;
+          }
+        }
+        timer += 1000;
+        if(repeat % 60 == 0) {
+          this.E.oNumber.innerText = round(this.number);
+          this.E.oNumberGain.innerText = round(this.number-preNumber);
+        }
+        repeat++;
+      }
+    }
 
     if(this.tickSpeed >= 30) {
       this.mult = this.delta/1000*this.tickSpeed;
@@ -64,6 +88,9 @@ class Game {
         }
       }
     }
+
+    this.cNumber.unshift(this.number-this.pNumber);
+    this.cNumber = this.cNumber.slice(0, 10);
     
     this.display();
   }
@@ -75,8 +102,11 @@ class Game {
     }
 
     this.E.number.innerText = round(this.number);
-    if(this.tickSpeed >= 30) this.E.numberGain.innerText = `${round((this.number-this.pNumber)*this.delta/1000*this.tickSpeed)} n/s`;
-    else this.E.numberGain.innerText = `${round((this.number-this.pNumber)*this.tickSpeed)} n/s`;
+    if(this.tickSpeed >= 30) {
+      const delta = this.deltas.reduce((a, b)=>a+b, 0)/this.deltas.length;
+      const cNumber = this.cNumber.reduce((a, b)=>a+b, 0)/this.cNumber.length;
+      this.E.numberGain.innerText = `${round(cNumber*delta/1000*this.tickSpeed)} n/s`;
+    } else this.E.numberGain.innerText = `${round((this.number-this.pNumber)*this.tickSpeed)} n/s`;
     this.E.tickSpeed.innerText = round(this.tickSpeed) +" Hz";
     this.E.gearRatio.innerText = round(this.gearRatio);
     this.E.lubricant.innerText = round(this.lubricant);
@@ -139,6 +169,7 @@ class Game {
       upgrades: this.upgrades,
       states: this.states,
       buyMode: this.buyMode,
+      pTime: this.pTime,
     }));
   }
   load() {
@@ -166,8 +197,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function round(num) {
-  if(num >= 1000000) {
-    const log = Math.floor(Math.log10(num));
+  if(Math.abs(num) >= 1000000) {
+    const log = Math.floor(Math.log10(Math.abs(num)));
     return Math.round(num/Math.pow(10, log)*100)/100+"e"+log;
   }
   return Math.round(num*100)/100;
